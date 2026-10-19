@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>时空终端 v1.0 · 平行宇宙生存指南</title>
+  <meta name="description" content="平行宇宙生存指南 —— 时空终端 v1.0，连接废土生存专家与时空警长。" />
+
+  <!-- ===== Tailwind CSS（CDN 版，开箱即用，生产环境建议改为本地构建） ===== -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Tailwind 主题扩展：把赛博朋克配色注册成工具类，如 text-neon / bg-panel */
+    tailwind.config = {
+      theme: {
+        extend: {
+          /* 注意：断点写在 extend 内是「新增」，写在 theme.screens 会覆盖掉默认 sm/md/lg */
+          screens: {
+            xs: '420px' // 超小屏断点：窄屏 Tab 只显示图标
+          },
+          colors: {
+            void:   '#05060f',
+            deep:   '#0a0e27',
+            panel:  '#101735',
+            line:   '#1e2a55',
+            neon:   '#22d3ee',
+            violet: '#a855f7',
+            toxic:  '#a3e635',
+            amber:  '#fbbf24',
+            muted:  '#8ea0c9'
+          },
+          fontFamily: {
+            display: ['Orbitron', 'JetBrains Mono', 'Consolas', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Consolas', 'Microsoft YaHei', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- ===== FontAwesome 图标库 ===== -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- ===== 科技感字体（可选，加载失败会自动回退到系统等宽字体） ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- ===== 自定义样式层 ===== -->
+  <link rel="stylesheet" href="znt.css" />
+</head>
+
+<body class="font-mono text-[#e2e8f5] min-h-screen">
+
+  <!-- ===== 背景层：深空渐变 + 星空 canvas + 透视网格 + CRT 扫描线 ===== -->
+  <div class="bg-space"></div>
+  <canvas id="starfield"></canvas>
+  <div class="bg-grid"></div>
+  <div class="scanline"></div>
+
+  <div class="app-layer flex flex-col min-h-screen">
+
+    <!-- ================== 顶部导航栏 ================== -->
+    <header class="sticky top-0 z-40 glass border-b border-[#1e2a55]/80">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+        <!-- Logo -->
+        <a href="#" onclick="App.switchView('home'); return false;" class="flex items-center gap-3 group shrink-0">
+          <span class="relative w-10 h-10 rounded-lg grid place-items-center bg-gradient-to-br from-[#22d3ee]/25 to-[#a855f7]/25 border border-[#22d3ee]/40 shadow-[0_0_18px_-4px_#22d3ee]">
+            <i class="fa-solid fa-satellite-dish text-[#22d3ee] group-hover:rotate-12 transition-transform"></i>
+            <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#a3e635] animate-ping"></span>
+          </span>
+          <span class="leading-tight">
+            <span class="block font-display font-bold text-[15px] sm:text-base tracking-wider text-white">时空终端</span>
+            <span class="block text-[10px] sm:text-[11px] text-[#8ea0c9] tracking-[0.2em]">v1.0 · TERMINAL</span>
+          </span>
+        </a>
+
+        <!-- Tab 切换 -->
+        <nav class="flex items-center gap-4 sm:gap-7 text-[13px] sm:text-sm">
+          <button class="tab-item active" data-view="home" onclick="App.switchView('home')">
+            <i class="fa-solid fa-house mr-1.5"></i><span class="hidden xs:inline">首页</span>
+          </button>
+          <button class="tab-item" data-view="terminal" onclick="App.switchView('terminal')">
+            <i class="fa-solid fa-terminal mr-1.5"></i><span class="hidden xs:inline">交互终端</span>
+          </button>
+          <button class="tab-item" data-view="guide" onclick="App.switchView('guide')">
+            <i class="fa-solid fa-book-open mr-1.5"></i><span class="hidden xs:inline">使用说明</span>
+          </button>
+          <button class="tab-item" data-view="builder" onclick="App.switchView('builder')">
+            <i class="fa-solid fa-plug-circle-plus mr-1.5"></i><span class="hidden xs:inline">接入智能体</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ================== 主内容区 ================== -->
+    <main class="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
+
+      <!-- ---------- 视图一：首页 Landing ---------- -->
+      <section id="view-home" class="view-enter">
+        <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+
+          <!-- 左：文案 -->
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] tracking-widest border border-[#22d3ee]/40 bg-[#22d3ee]/10 text-[#22d3ee] mb-6">
+              <i class="fa-solid fa-tower-broadcast animate-pulse"></i>
+              MULTIVERSE // SURVIVAL
+            </div>
+
+            <h1 class="neon-title font-display text-[28px] sm:text-4xl lg:text-5xl font-black leading-tight">
+              欢迎来到<br />
+              <span class="gradient-text">平行宇宙避难所</span>
+            </h1>
+
+            <p class="mt-5 text-base sm:text-lg text-[#8ea0c9] leading-relaxed">
+              当时间线崩坏，你该何去何从？
+            </p>
+            <p class="mt-3 text-sm text-[#8ea0c9]/85 leading-relaxed max-w-md">
+              这里有两位常年驻守裂隙的向导：一位教你在辐射尘里活过今晚，一位负责把你送回正确的时间线。
+            </p>
+
+            <div class="mt-8 flex flex-wrap items-center gap-4">
+              <button onclick="App.switchView('terminal')"
+                      class="btn-neon group px-6 py-3.5 rounded-xl text-sm sm:text-base font-semibold tracking-wide text-white">
+                <i class="fa-solid fa-plug-circle-bolt mr-2"></i>
+                连接时空网络（进入交互）
+                <i class="fa-solid fa-arrow-right ml-1 text-xs group-hover:translate-x-1 transition-transform"></i>
+              </button>
+              <button onclick="App.switchView('guide')"
+                      class="px-5 py-3 rounded-xl text-sm border border-[#1e2a55] text-[#8ea0c9] hover:text-white hover:border-[#a855f7]/60 transition">
+                <i class="fa-regular fa-circle-question mr-1.5"></i>先看看怎么用
+              </button>
+            </div>
+
+            <!-- 数据条 -->
+            <div class="mt-10 grid grid-cols-3 gap-3 max-w-md">
+              <div class="glass rounded-lg px-3 py-2.5 text-center">
+                <div class="font-display text-lg text-[#22d3ee] text-glow-cyan" data-count="1024">0</div>
+                <div class="text-[10px] text-[#8ea0c9] mt-0.5">稳定时间线</div>
+              </div>
+              <div class="glass rounded-lg px-3 py-2.5 text-center">
+                <div class="font-display text-lg text-[#fbbf24]">37</div>
+                <div class="text-[10px] text-[#8ea0c9] mt-0.5">今日崩坏</div>
+              </div>
+              <div class="glass rounded-lg px-3 py-2.5 text-center">
+                <div class="font-display text-lg text-[#a3e635]">2</div>
+                <div class="text-[10px] text-[#8ea0c9] mt-0.5">在线向导</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右：装饰面板 -->
+          <div class="relative">
+            <div class="glass corner-frame rounded-2xl p-5 sm:p-6 float-slow">
+              <div class="flex items-center justify-between pb-3 border-b border-[#1e2a55]">
+                <span class="text-[11px] tracking-widest text-[#8ea0c9]">SYSTEM STATUS</span>
+                <span class="flex items-center gap-1.5 text-[11px] text-[#4ade80]">
+                  <span class="status-dot"></span>ONLINE
+                </span>
+              </div>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li class="flex items-center justify-between"><span class="text-[#8ea0c9]"><i class="fa-solid fa-skull-crossbones mr-2 text-[#a3e635]"></i>废土生存专家</span><span class="text-[#4ade80]">就绪</span></li>
+                <li class="flex items-center justify-between"><span class="text-[#8ea0c9]"><i class="fa-solid fa-shield-halved mr-2 text-[#22d3ee]"></i>时空警长</span><span class="text-[#4ade80]">就绪</span></li>
+                <li class="flex items-center justify-between"><span class="text-[#8ea0c9]"><i class="fa-solid fa-radiation mr-2 text-[#fbbf24]"></i>背景辐射值</span><span class="text-[#fbbf24]">0.37 μSv/h</span></li>
+                <li class="flex items-center justify-between"><span class="text-[#8ea0c9]"><i class="fa-solid fa-clock-rotate-left mr-2 text-[#a855f7]"></i>时间线同步率</span><span class="text-[#22d3ee]">98.2%</span></li>
+              </ul>
+              <div class="glitch-bar mt-5 rounded"></div>
+              <p class="mt-4 text-[11px] leading-relaxed text-[#8ea0c9]">
+                <span class="text-[#22d3ee]">root@multiverse:~#</span> tail -f timeline.log<br />
+                <span class="caret text-[#a3e635]">监听中</span>
+              </p>
+            </div>
+            <!-- 面板背后的光斑 -->
+            <div class="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-tr from-[#22d3ee]/20 via-transparent to-[#a855f7]/20 blur-2xl"></div>
+          </div>
+        </div>
+
+        <!-- 特性三卡 -->
+        <div class="mt-14 sm:mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div class="glass rounded-xl p-5 hover:border-[#a3e635]/50 transition">
+            <i class="fa-solid fa-droplet text-2xl text-[#a3e635]"></i>
+            <h3 class="mt-3 font-semibold text-white">废土求生</h3>
+            <p class="mt-1.5 text-sm text-[#8ea0c9] leading-relaxed">净水、避难、识别可食用变异体。在没有明天的世界里，多活一天就是胜利。</p>
+          </div>
+          <div class="glass rounded-xl p-5 hover:border-[#22d3ee]/50 transition">
+            <i class="fa-solid fa-clock-rotate-left text-2xl text-[#22d3ee]"></i>
+            <h3 class="mt-3 font-semibold text-white">时间悖论处置</h3>
+            <p class="mt-1.5 text-sm text-[#8ea0c9] leading-relaxed">祖父悖论、自我相遇、因果闭环。别慌，时空警长处理过比这更糟的情况。</p>
+          </div>
+          <div class="glass rounded-xl p-5 hover:border-[#a855f7]/50 transition sm:col-span-2 lg:col-span-1">
+            <i class="fa-solid fa-shield-halved text-2xl text-[#a855f7]"></i>
+            <h3 class="mt-3 font-semibold text-white">本地离线运行</h3>
+            <p class="mt-1.5 text-sm text-[#8ea0c9] leading-relaxed">可接扣子、Dify 或任意 OpenAI 兼容接口；未接入时自动回退本地模拟，浏览器直连，无需自建后端。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 视图二：交互终端（核心） ---------- -->
+      <section id="view-terminal" class="hidden">
+        <div class="grid lg:grid-cols-[300px_1fr] gap-5">
+
+          <!-- 左侧：智能体选择区 -->
+          <aside class="glass rounded-2xl p-4 self-start lg:sticky lg:top-24">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-[11px] tracking-widest text-[#8ea0c9]">AGENT SELECTOR</h2>
+              <span id="onlineCount" class="text-[10px] px-2 py-0.5 rounded border border-[#22d3ee]/40 text-[#22d3ee]">2 名在线</span>
+            </div>
+
+            <!-- 智能体卡片由 JS 动态渲染：移动端并排两列，桌面端纵向排列 -->
+            <div id="agentList" class="grid grid-cols-2 lg:grid-cols-1 gap-2.5 lg:gap-3"></div>
+
+            <!-- 侧栏装饰信息（移动端隐藏，避免把聊天区推得太低） -->
+            <div class="hidden lg:block mt-4 pt-4 border-t border-[#1e2a55] space-y-2 text-[11px] text-[#8ea0c9]">
+              <div class="flex justify-between"><span>连接延迟</span><span class="text-[#4ade80]">12 ms</span></div>
+              <div class="flex justify-between"><span>当前时间线</span><span class="text-[#22d3ee]">#M-1024</span></div>
+              <div class="flex justify-between"><span>内核模式</span><span id="kernelMode" class="text-[#fbbf24]">本地模拟</span></div>
+            </div>
+          </aside>
+
+          <!-- 右侧：聊天主区域 -->
+          <div class="glass rounded-2xl flex flex-col overflow-hidden min-h-[480px] lg:min-h-[560px] lg:h-[calc(100vh-9.5rem)]">
+
+            <!-- 聊天头部：当前智能体信息 -->
+            <header class="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-[#1e2a55] bg-[#0a0e27]/60">
+              <span id="chatAvatar" class="avatar-ring w-10 h-10 shrink-0 rounded-xl grid place-items-center text-lg"
+                    style="--agent-color:#a3e635; background:rgba(163,230,53,.12); color:#a3e635;">
+                <i class="fa-solid fa-skull-crossbones"></i>
+              </span>
+              <div class="min-w-0 flex-1">
+                <h3 id="chatName" class="font-semibold text-white truncate">废土生存专家</h3>
+                <p class="text-[11px] text-[#8ea0c9] flex items-center gap-1.5 min-w-0">
+                  <span class="status-dot shrink-0"></span><span id="chatDesc" class="truncate">在线 · 极端环境求生</span>
+                </p>
+              </div>
+              <button onclick="App.resetConversation()" title="重置会话"
+                      class="shrink-0 w-9 h-9 rounded-lg border border-[#1e2a55] text-[#8ea0c9] hover:text-[#f87171] hover:border-[#f87171]/60 transition">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </header>
+
+            <!-- 消息展示区：窄屏限制最大高度（输入框留在首屏内），桌面端撑满剩余空间 -->
+            <div id="chatBody" class="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-5 max-h-[46dvh] lg:max-h-none"></div>
+
+            <!-- 快捷提问 -->
+            <div id="quickChips" class="px-4 sm:px-6 pb-2 flex flex-wrap gap-2"></div>
+
+            <!-- 输入区 -->
+            <form id="chatForm" onsubmit="App.sendMessage(); return false;"
+                  class="px-4 sm:px-6 py-4 border-t border-[#1e2a55] bg-[#0a0e27]/60">
+              <div class="flex items-end gap-2 sm:gap-3">
+                <textarea id="chatInput" rows="1" maxlength="500"
+                          placeholder="描述你的处境或问题……"
+                          oninput="App.autoGrow(this)"
+                          onkeydown="App.handleEnter(event)"
+                          class="chat-input flex-1 resize-none rounded-xl px-4 py-3 text-sm max-h-32"></textarea>
+                <button type="submit" id="sendBtn"
+                        class="btn-neon shrink-0 w-11 h-11 sm:w-auto sm:px-5 sm:h-11 rounded-xl text-white grid place-items-center">
+                  <i class="fa-solid fa-paper-plane"></i><span class="hidden sm:inline ml-2 text-sm">发送</span>
+                </button>
+              </div>
+              <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#5f6f99]">
+                <span><i class="fa-solid fa-keyboard mr-1"></i>Enter 发送 / Shift + Enter 换行</span>
+                <span class="hidden sm:inline"><i class="fa-solid fa-circle-exclamation mr-1"></i><span id="kernelHint">回复由 AI 生成，仅供娱乐</span></span>
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 视图三：使用说明 ---------- -->
+      <section id="view-guide" class="hidden max-w-4xl mx-auto">
+        <div class="text-center mb-10">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] tracking-widest border border-[#a855f7]/40 bg-[#a855f7]/10 text-[#c084fc] mb-5">
+            <i class="fa-solid fa-book-open"></i>USER MANUAL
+          </div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">使用说明</h2>
+          <p class="mt-3 text-sm sm:text-base text-[#8ea0c9]">三步完成一次跨宇宙连接，全程不超过十秒。</p>
+        </div>
+
+        <div class="grid gap-4 sm:gap-5 md:grid-cols-3">
+          <div class="glass rounded-xl p-5 relative overflow-hidden">
+            <span class="absolute right-4 top-4 font-display text-[10px] tracking-[0.25em] text-white/30">STEP 01</span>
+            <i class="fa-solid fa-user-astronaut text-xl text-[#22d3ee]"></i>
+            <h3 class="mt-3 font-semibold text-white">选择你的专属向导</h3>
+            <p class="mt-1.5 text-sm text-[#8ea0c9] leading-relaxed">在交互终端左侧点选【废土生存专家】或【时空警长】，切换时对话会自动重置。</p>
+          </div>
+          <div class="glass rounded-xl p-5 relative overflow-hidden">
+            <span class="absolute right-4 top-4 font-display text-[10px] tracking-[0.25em] text-white/30">STEP 02</span>
+            <i class="fa-solid fa-keyboard text-xl text-[#a3e635]"></i>
+            <h3 class="mt-3 font-semibold text-white">输入你的问题</h3>
+            <p class="mt-1.5 text-sm text-[#8ea0c9] leading-relaxed">在底部输入框描述你的处境，也可以直接点选上方的快捷问题。</p>
+          </div>
+          <div class="glass rounded-xl p-5 relative overflow-hidden">
+            <span class="absolute right-4 top-4 font-display text-[10px] tracking-[0.25em] text-white/30">STEP 03</span>
+            <i class="fa-solid fa-paper-plane text-xl text-[#a855f7]"></i>
+            <h3 class="mt-3 font-semibold text-white">点击发送</h3>
+            <p class="mt-1.5 text-sm text-[#8ea0c9] leading-relaxed">按下发送键或直接回车，向导会在一秒内回复。切换 Tab 不会丢失当前对话。</p>
+          </div>
+        </div>
+
+        <!-- 注意事项 -->
+        <div class="glass rounded-xl p-5 sm:p-6 mt-6 border-[#fbbf24]/30">
+          <h3 class="flex items-center gap-2 font-semibold text-[#fbbf24]">
+            <i class="fa-solid fa-triangle-exclamation"></i>温馨提示
+          </h3>
+          <p class="mt-2 text-sm sm:text-base text-[#cbd5f0] leading-relaxed">
+            温馨提示：平行宇宙的对话具有随机性，请勿对时空悖论过度深究。
+          </p>
+          <ul class="mt-4 space-y-2 text-sm text-[#8ea0c9]">
+            <li><i class="fa-solid fa-check text-[#a3e635] mr-2"></i>未接入外部接口时由本地模拟内核回复；接入后消息直接发送到你配置的平台。</li>
+            <li><i class="fa-solid fa-check text-[#a3e635] mr-2"></i>顶部「接入智能体」可以填入自己的 bot_id，接入后与内置向导并列，同样支持切换与多轮对话。</li>
+            <li><i class="fa-solid fa-check text-[#a3e635] mr-2"></i>刷新页面会重置全部会话记录，这是设计使然，不是 bug。</li>
+            <li><i class="fa-solid fa-check text-[#a3e635] mr-2"></i>如果你真的见到了来自另一条时间线的自己，请先不要握手。</li>
+          </ul>
+        </div>
+
+        <div class="mt-6 text-center">
+          <button onclick="App.switchView('terminal')" class="btn-neon px-6 py-3 rounded-xl text-sm font-semibold text-white">
+            <i class="fa-solid fa-terminal mr-2"></i>立即前往交互终端
+          </button>
+        </div>
+      </section>
+
+      <!-- ---------- 视图四：接入智能体 ---------- -->
+      <!-- ---------- 视图四：接入智能体 ---------- -->
+      <section id="view-builder" class="hidden max-w-7xl mx-auto">
+
+        <div class="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] tracking-widest border border-[#22d3ee]/40 bg-[#22d3ee]/10 text-[#22d3ee] mb-3">
+              <i class="fa-solid fa-plug-circle-plus"></i>AGENT ONBOARDING
+            </div>
+            <h2 class="font-display text-xl sm:text-2xl font-bold text-white">接入你自己的智能体</h2>
+            <p class="mt-1.5 text-[13px] text-[#8ea0c9]">
+              左侧填连接信息，右侧立刻试聊。支持扣子、Dify 与任意 OpenAI 兼容接口。
+            </p>
+          </div>
+          <p class="text-[11px] text-[#5f6f99] shrink-0">
+            <i class="fa-solid fa-lock mr-1"></i>凭据仅保存在本机浏览器
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-5 items-start">
+
+          <!-- ============ 左：接入配置 ============ -->
+          <div class="lg:col-span-4 glass rounded-2xl p-5 corner-frame
+                      lg:h-[calc(100vh-17rem)] lg:max-h-[820px] lg:overflow-y-auto lg:pr-4">
+            <h3 class="flex items-center gap-2 text-sm font-semibold text-white pb-3 mb-4 border-b border-[#1e2a55]">
+              <i class="fa-solid fa-sliders text-[#22d3ee]"></i>接入配置
+            </h3>
+
+            <!-- 接口类型 -->
+            <div>
+              <label class="field-label" for="fldProvider">接口类型</label>
+              <div class="select-wrap">
+                <select id="fldProvider" class="field select-field" onchange="Builder.onProviderChange()">
+                  <option value="coze">扣子 Coze (Bot)</option>
+                  <option value="dify">Dify 应用 (App)</option>
+                  <option value="openai">OpenAI 兼容接口</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+            </div>
+
+            <!-- 名称与定位 -->
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <label class="field-label" for="fldName">显示名称 <span class="text-[#f87171]">*</span></label>
+                <input id="fldName" class="field" maxlength="20" autocomplete="off"
+                       placeholder="量子档案员" oninput="Builder.onMetaChange()" />
+              </div>
+              <div>
+                <label class="field-label" for="fldDesc">一句话定位</label>
+                <input id="fldDesc" class="field" maxlength="30" autocomplete="off"
+                       placeholder="整理混乱时间线" oninput="Builder.onMetaChange()" />
+              </div>
+            </div>
+
+            <!-- 扣子 -->
+            <div data-pgroup="coze">
+              <div class="mt-3.5">
+                <label class="field-label" for="cozeBotId">AppKey（Bot ID）<span class="text-[#f87171]">*</span></label>
+                <input id="cozeBotId" class="field" inputmode="numeric" autocomplete="off"
+                       placeholder="如 7300000000000000000" />
+                <p class="field-tip">智能体编辑页地址栏 /bot/ 后面那串数字</p>
+              </div>
+              <div class="mt-3.5">
+                <label class="field-label" for="cozeToken">API 密钥</label>
+                <div class="key-wrap">
+                  <input id="cozeToken" type="password" class="field" autocomplete="off"
+                         placeholder="pat_xxxxxxxx（留空用本站默认）" />
+                  <button type="button" class="key-eye" onclick="Builder.toggleKey('cozeToken', this)">显示</button>
+                </div>
+                <p class="field-tip">扣子个人访问令牌（PAT），需具备 chat 权限</p>
+              </div>
+              <div class="mt-3.5">
+                <label class="field-label" for="cozeApiBase">接口地址</label>
+                <input id="cozeApiBase" class="field" autocomplete="off" placeholder="https://api.coze.cn" />
+              </div>
+            </div>
+
+            <!-- Dify -->
+            <div data-pgroup="dify" class="hidden">
+              <div class="mt-3.5">
+                <label class="field-label" for="difyAppKey">App Key <span class="text-[#f87171]">*</span></label>
+                <div class="key-wrap">
+                  <input id="difyAppKey" type="password" class="field" autocomplete="off" placeholder="app-xxxxxxxxxxxxxxxx" />
+                  <button type="button" class="key-eye" onclick="Builder.toggleKey('difyAppKey', this)">显示</button>
+                </div>
+                <p class="field-tip">Dify 应用的「访问 API」页生成</p>
+              </div>
+              <div class="mt-3.5">
+                <label class="field-label" for="difyBaseUrl">接口地址</label>
+                <input id="difyBaseUrl" class="field" autocomplete="off" placeholder="https://api.dify.ai/v1" />
+              </div>
+            </div>
+
+            <!-- OpenAI 兼容 -->
+            <div data-pgroup="openai" class="hidden">
+              <div class="mt-3.5">
+                <label class="field-label" for="oaiApiKey">API 密钥 <span class="text-[#f87171]">*</span></label>
+                <div class="key-wrap">
+                  <input id="oaiApiKey" type="password" class="field" autocomplete="off" placeholder="sk-xxxxxxxx" />
+                  <button type="button" class="key-eye" onclick="Builder.toggleKey('oaiApiKey', this)">显示</button>
+                </div>
+              </div>
+              <div class="mt-3.5">
+                <label class="field-label" for="oaiBaseUrl">接口地址</label>
+                <input id="oaiBaseUrl" class="field" autocomplete="off"
+                       placeholder="https://api.deepseek.com/v1" />
+                <p class="field-tip">可粘贴 ws:// 地址，会自动转成 https://</p>
+              </div>
+              <div class="mt-3.5 grid grid-cols-2 gap-3">
+                <div>
+                  <label class="field-label" for="oaiModel">模型 / 接入点 <span class="text-[#f87171]">*</span></label>
+                  <input id="oaiModel" class="field" autocomplete="off" placeholder="deepseek-chat" />
+                </div>
+                <div>
+                  <label class="field-label" for="oaiTemp">温度</label>
+                  <input id="oaiTemp" class="field" type="number" min="0" max="2" step="0.1" value="0.7" />
+                </div>
+              </div>
+              <div class="mt-3.5">
+                <label class="field-label" for="oaiSystem">人设提示词（选填）</label>
+                <textarea id="oaiSystem" rows="3" class="field resize-none"
+                          placeholder="例如：你是原神养成顾问，回答简洁并给出数值依据"></textarea>
+              </div>
+            </div>
+
+            <!-- 更多设置：默认收起，把首屏空间留给主字段 -->
+            <details class="mt-3.5 group">
+              <summary class="field-label cursor-pointer list-none flex items-center gap-1.5 hover:text-white transition select-none">
+                <i class="fa-solid fa-chevron-right text-[8px] transition-transform duration-200 group-open:rotate-90"></i>
+                更多设置 · 开场白 / 图标 / 配色
+              </summary>
+              <div class="mt-1">
+              <!-- 开场白 -->
+              <div class="mt-3.5">
+                <label class="field-label" for="fldGreeting">开场白（选填）</label>
+                <textarea id="fldGreeting" rows="2" class="field resize-none"
+                          placeholder="留空会自动生成一句"></textarea>
+              </div>
+
+              <!-- 图标与配色 -->
+              <div class="mt-3.5">
+                <span class="field-label">图标与配色</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <div id="iconPicker" class="flex gap-1.5">
+                    <button type="button" class="pick-icon picked" data-icon="fa-satellite-dish" onclick="Builder.pickIcon(this)" title="卫星天线"><i class="fa-solid fa-satellite-dish"></i></button>
+                    <button type="button" class="pick-icon" data-icon="fa-user-astronaut" onclick="Builder.pickIcon(this)" title="宇航员"><i class="fa-solid fa-user-astronaut"></i></button>
+                    <button type="button" class="pick-icon" data-icon="fa-dragon" onclick="Builder.pickIcon(this)" title="龙"><i class="fa-solid fa-dragon"></i></button>
+                    <button type="button" class="pick-icon" data-icon="fa-microchip" onclick="Builder.pickIcon(this)" title="芯片"><i class="fa-solid fa-microchip"></i></button>
+                    <button type="button" class="pick-icon" data-icon="fa-brain" onclick="Builder.pickIcon(this)" title="大脑"><i class="fa-solid fa-brain"></i></button>
+                  </div>
+                  <span class="w-px h-5 bg-[#1e2a55] mx-0.5"></span>
+                  <div id="colorPicker" class="flex gap-1.5 items-center">
+                    <button type="button" class="pick-color picked" data-color="#22d3ee" onclick="Builder.pickColor(this)" style="background:#22d3ee" title="青"></button>
+                    <button type="button" class="pick-color" data-color="#a3e635" onclick="Builder.pickColor(this)" style="background:#a3e635" title="黄绿"></button>
+                    <button type="button" class="pick-color" data-color="#a855f7" onclick="Builder.pickColor(this)" style="background:#a855f7" title="紫"></button>
+                    <button type="button" class="pick-color" data-color="#fbbf24" onclick="Builder.pickColor(this)" style="background:#fbbf24" title="金"></button>
+                    <button type="button" class="pick-color" data-color="#f472b6" onclick="Builder.pickColor(this)" style="background:#f472b6" title="粉"></button>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </details>
+            <!-- 操作 -->
+            <div class="mt-5 flex gap-2.5">
+              <button id="btnSaveAgent" type="button" onclick="Builder.submit()"
+                      class="btn-neon flex-1 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>保存配置
+              </button>
+              <button type="button" onclick="Builder.test()"
+                      class="px-4 py-2.5 rounded-xl text-[13px] border border-[#1e2a55] text-[#cbd5f0] hover:border-[#22d3ee]/50 hover:text-white transition">
+                <i class="fa-solid fa-satellite-dish mr-1.5"></i>测试连接
+              </button>
+            </div>
+            <p id="builderMsg" class="mt-2.5 text-[11.5px] leading-relaxed text-[#8ea0c9] min-h-[17px]"></p>
+            <p class="text-[10.5px] leading-relaxed text-[#5f6f99]">
+              密钥以明文保存在浏览器本地存储，不会写入页面源码或上传服务器；共用设备请用完删除。
+            </p>
+
+            <!-- 已接入 -->
+            <div class="mt-4 pt-4 border-t border-[#1e2a55]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] text-[#8ea0c9]">
+                  <i class="fa-solid fa-layer-group mr-1 text-[#a855f7]"></i>已接入
+                  <span id="customCount" class="ml-1 text-[10px] px-1.5 py-0.5 rounded-md bg-[#a855f7]/15 text-[#c084fc]">0</span>
+                </span>
+                <button type="button" onclick="Builder.clearAll(this)"
+                        class="text-[10px] text-[#5f6f99] hover:text-[#f87171] transition">
+                  <i class="fa-solid fa-trash-can mr-1"></i>清除本地记录
+                </button>
+              </div>
+              <div id="customList" class="space-y-1.5"></div>
+            </div>
+          </div>
+
+          <!-- ============ 右：对话预览 ============ -->
+          <div class="lg:col-span-8 glass rounded-2xl flex flex-col overflow-hidden
+                      min-h-[460px] lg:h-[calc(100vh-17rem)] lg:max-h-[820px] lg:sticky lg:top-24">
+
+            <div class="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-[#1e2a55] shrink-0">
+              <h3 class="flex items-center gap-2 text-sm font-semibold text-white">
+                <i class="fa-solid fa-comments text-[#a855f7]"></i>智能体对话
+              </h3>
+              <button type="button" onclick="Builder.clearPreview()"
+                      class="text-[11px] px-3 py-1.5 rounded-lg border border-[#1e2a55] text-[#8ea0c9] hover:border-[#22d3ee]/50 hover:text-white transition">
+                <i class="fa-solid fa-eraser mr-1"></i>清空对话
+              </button>
+            </div>
+
+            <div id="previewBody" class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4"></div>
+
+            <div class="border-t border-[#1e2a55] px-3 sm:px-4 py-3 shrink-0">
+              <div class="flex items-end gap-2">
+                <textarea id="previewInput" rows="1" maxlength="500"
+                          placeholder="输入消息，Enter 发送 / Shift + Enter 换行"
+                          oninput="Builder.autoGrow(this)"
+                          onkeydown="Builder.onPreviewKey(event)"
+                          class="chat-input flex-1 resize-none rounded-xl px-3.5 py-2.5 text-[13px] max-h-24"></textarea>
+                <button type="button" id="btnPreviewSend" onclick="Builder.sendPreview()"
+                        class="btn-neon shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white">
+                  <i class="fa-solid fa-paper-plane mr-1.5"></i>发送
+                </button>
+              </div>
+              <p id="previewHint" class="mt-2 text-[10.5px] text-[#5f6f99]">
+                <i class="fa-solid fa-circle-info mr-1"></i>先在左侧填写配置并保存，即可开始对话。
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- ================== 页脚 ================== -->
+    <footer class="border-t border-[#1e2a55]/70 py-6">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#5f6f99]">
+        <p>© 2077 时空终端 · 平行宇宙生存指南 · <span class="text-[#8ea0c9]">Multiverse Survival Guide</span></p>
+        <p>本终端在第 <span id="footerTimeline">0</span> 次重启后仍保持在线</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="znt.js"></script>
+</body>
+</html>

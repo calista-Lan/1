@@ -1,0 +1,593 @@
+/* ==========================================================
+   znt.css —— 时空终端 v1.0 自定义样式层
+   说明：Tailwind CDN 负责工具类布局，本文件负责
+        1) 赛博朋克 / 太空科幻的视觉氛围（光效、扫描线、星空）
+        2) Tailwind 不便于表达的动画与组件样式
+        3) CDN 加载失败时的兜底基础样式，保证页面不至于崩坏
+   ========================================================== */
+
+/* ---------- 主题变量 ---------- */
+:root {
+  --c-void: #05060f;      /* 深空底色 */
+  --c-deep: #0a0e27;      /* 面板底色 */
+  --c-panel: #101735;     /* 卡片底色 */
+  --c-line: #1e2a55;      /* 边框 */
+  --c-neon: #22d3ee;      /* 霓虹青（主强调色） */
+  --c-violet: #a855f7;    /* 星云紫 */
+  --c-magenta: #f0abfc;   /* 品红（点缀） */
+  --c-toxic: #a3e635;     /* 废土毒绿 */
+  --c-amber: #fbbf24;     /* 警示琥珀 */
+  --c-text: #e2e8f5;      /* 主文字 */
+  --c-muted: #8ea0c9;     /* 次要文字 */
+}
+
+/* ---------- 兜底基础样式（Tailwind 未加载时也保持可读） ---------- */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--c-void);
+  color: var(--c-text);
+  font-family: 'JetBrains Mono', 'Cascadia Mono', Consolas, 'Microsoft YaHei', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- 背景：深空渐变 + 网格透视 + 双色星云光晕 ---------- */
+.bg-space {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 600px at 12% -10%, rgba(168, 85, 247, .28), transparent 60%),
+    radial-gradient(800px 600px at 88% 0%, rgba(34, 211, 238, .20), transparent 60%),
+    radial-gradient(700px 700px at 50% 110%, rgba(236, 72, 153, .16), transparent 60%),
+    linear-gradient(180deg, #05060f 0%, #080b1e 40%, #05060f 100%);
+}
+
+/* 星空 canvas */
+#starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 底部透视网格 */
+.bg-grid {
+  position: fixed;
+  left: -20%;
+  right: -20%;
+  bottom: -10%;
+  height: 55vh;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(34, 211, 238, .16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, .14) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(520px) rotateX(66deg);
+  transform-origin: bottom center;
+  mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+  animation: grid-drift 18s linear infinite;
+}
+
+@keyframes grid-drift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 64px, 64px 0; }
+}
+
+/* 页面内容统一抬高层级 */
+.app-layer { position: relative; z-index: 10; }
+
+/* ---------- 玻璃拟态面板 ---------- */
+.glass {
+  background: linear-gradient(160deg, rgba(16, 23, 53, .82), rgba(10, 14, 39, .72));
+  border: 1px solid rgba(34, 211, 238, .18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .02) inset,
+              0 18px 50px -20px rgba(0, 0, 0, .9);
+}
+
+/* 面板四角切角装饰 */
+.corner-frame { position: relative; }
+.corner-frame::before,
+.corner-frame::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--c-neon);
+  opacity: .75;
+  pointer-events: none;
+}
+.corner-frame::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.corner-frame::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+/* ---------- 文字效果 ---------- */
+.neon-title {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(34, 211, 238, .75), 0 0 28px rgba(168, 85, 247, .55);
+}
+
+.text-glow-cyan   { text-shadow: 0 0 10px rgba(34, 211, 238, .6); }
+.text-glow-violet { text-shadow: 0 0 10px rgba(168, 85, 247, .6); }
+
+/* 标题/英文字使用科技字体 */
+.font-display {
+  font-family: 'Orbitron', 'JetBrains Mono', Consolas, system-ui, sans-serif;
+  letter-spacing: .04em;
+}
+
+/* 渐变流动文字 */
+.gradient-text {
+  background: linear-gradient(90deg, #22d3ee, #a855f7 45%, #f0abfc 70%, #22d3ee);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-x 6s linear infinite;
+}
+
+@keyframes gradient-x {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+
+/* 打字机光标 */
+.caret::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -2px;
+  background: var(--c-neon);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- 按钮 ---------- */
+.btn-neon {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(34, 211, 238, .55);
+  background: linear-gradient(120deg, rgba(34, 211, 238, .14), rgba(168, 85, 247, .22));
+  box-shadow: 0 0 18px rgba(34, 211, 238, .25), inset 0 0 22px rgba(168, 85, 247, .12);
+  transition: transform .18s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.btn-neon:hover {
+  transform: translateY(-2px);
+  border-color: var(--c-neon);
+  box-shadow: 0 0 30px rgba(34, 211, 238, .5), inset 0 0 30px rgba(168, 85, 247, .2);
+}
+.btn-neon:active { transform: translateY(0); }
+
+/* 按钮扫光 */
+.btn-neon::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -120%;
+  width: 45%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .28), transparent);
+  transform: skewX(-18deg);
+  transition: left .55s ease;
+}
+.btn-neon:hover::after { left: 140%; }
+
+/* ---------- 顶部 Tab ---------- */
+.tab-item {
+  position: relative;
+  color: var(--c-muted);
+  transition: color .2s ease;
+  white-space: nowrap;
+}
+.tab-item:hover { color: #fff; }
+.tab-item.active { color: #fff; }
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--c-neon), var(--c-violet));
+  box-shadow: 0 0 12px rgba(34, 211, 238, .8);
+}
+
+/* ---------- 智能体卡片 ---------- */
+.agent-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(30, 42, 85, .9);
+  background: linear-gradient(150deg, rgba(16, 23, 53, .85), rgba(10, 14, 39, .6));
+  transition: transform .2s ease, border-color .25s ease, box-shadow .3s ease;
+}
+.agent-card:hover { transform: translateY(-2px) scale(1.01); }
+
+/* 选中态：左侧光条 + 外发光 */
+.agent-card.active {
+  border-color: var(--card-color, var(--c-neon));
+  box-shadow: 0 0 0 1px var(--card-color, var(--c-neon)) inset,
+              0 0 26px -6px var(--card-color, var(--c-neon));
+}
+.agent-card.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--card-color, var(--c-neon));
+  box-shadow: 0 0 14px var(--card-color, var(--c-neon));
+}
+
+/* 卡片内扫描掠过的光线 */
+.agent-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(34, 211, 238, .10) 50%, transparent 55%);
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+}
+.agent-card:hover::after { opacity: 1; }
+
+/* ---------- 状态指示灯 ---------- */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: #4ade80;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, .7);
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, .55); }
+  70%  { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+/* ---------- 消息气泡 ---------- */
+.msg-bubble {
+  position: relative;
+  animation: msg-in .35s cubic-bezier(.2, .9, .3, 1.2) both;
+  word-break: break-word;
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.bubble-user {
+  background: linear-gradient(135deg, rgba(168, 85, 247, .30), rgba(99, 102, 241, .22));
+  border: 1px solid rgba(168, 85, 247, .45);
+  border-bottom-right-radius: 4px;
+}
+
+.bubble-ai {
+  background: linear-gradient(135deg, rgba(16, 23, 53, .92), rgba(12, 18, 45, .85));
+  border: 1px solid rgba(34, 211, 238, .28);
+  border-bottom-left-radius: 4px;
+}
+
+/* 头像呼吸光圈 */
+.avatar-ring {
+  box-shadow: 0 0 0 1px var(--agent-color, var(--c-neon)) inset,
+              0 0 16px -2px var(--agent-color, var(--c-neon));
+}
+
+/* ---------- 正在输入三点动画 ---------- */
+.typing span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin: 0 2px;
+  border-radius: 999px;
+  background: var(--c-neon);
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.typing span:nth-child(2) { animation-delay: .18s; }
+.typing span:nth-child(3) { animation-delay: .36s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .45; }
+  30%           { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ---------- 输入框 ---------- */
+.chat-input {
+  background: rgba(8, 12, 32, .8);
+  border: 1px solid rgba(34, 211, 238, .22);
+  color: var(--c-text);
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.chat-input:focus {
+  outline: none;
+  border-color: var(--c-neon);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, .12), 0 0 24px -6px rgba(34, 211, 238, .5);
+}
+.chat-input::placeholder { color: #5f6f99; }
+
+/* 输入框自身不需要滚动条（滚动条样式只服务于消息区） */
+.chat-input::-webkit-scrollbar { width: 0; height: 0; }
+.chat-input { scrollbar-width: none; }
+
+/* ---------- 快捷问题标签 ---------- */
+.chip {
+  border: 1px solid rgba(34, 211, 238, .3);
+  background: rgba(34, 211, 238, .06);
+  color: #b6c6ea;
+  transition: all .2s ease;
+}
+.chip:hover {
+  border-color: var(--c-neon);
+  color: #fff;
+  background: rgba(34, 211, 238, .16);
+  box-shadow: 0 0 14px -4px var(--c-neon);
+}
+
+/* ---------- 顶部 CRT 扫描线 ---------- */
+.scanline {
+  position: fixed;
+  left: 0; right: 0;
+  height: 120px;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, .05) 60%, transparent);
+  animation: scan-run 7s linear infinite;
+}
+
+@keyframes scan-run {
+  from { top: -140px; }
+  to   { top: 100%; }
+}
+
+/* ---------- 滚动条美化 ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, .03); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(34, 211, 238, .5), rgba(168, 85, 247, .5));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(34, 211, 238, .75); }
+
+/* ---------- 浮动装饰动画 ---------- */
+.float-slow { animation: float-y 6s ease-in-out infinite; }
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+/* ---------- 视图切换动画 ---------- */
+.view-enter { animation: view-fade .45s ease both; }
+
+@keyframes view-fade {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- 首屏故障风装饰条 ---------- */
+.glitch-bar {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--c-neon), var(--c-violet), transparent);
+  filter: blur(.4px);
+  animation: gradient-x 4s linear infinite;
+  background-size: 200% 100%;
+}
+
+/* ---------- 小屏适配补充 ---------- */
+@media (max-width: 1023px) {
+  .bg-grid { height: 40vh; }
+}
+
+/* 移动端进入「交互终端」时锁定视口：
+   头部固定、侧栏自适应、消息区内部滚动，保证输入框永远在首屏内 */
+@media (max-width: 1023.98px) {
+  body.view-lock {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  body.view-lock .app-layer {
+    min-height: 0;
+    height: 100%;
+  }
+  body.view-lock main {
+    min-height: 0;
+    padding-top: .75rem;
+    padding-bottom: .75rem;
+    display: flex;
+    flex-direction: column;
+  }
+  body.view-lock #view-terminal {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  body.view-lock #view-terminal > .grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  body.view-lock #chatBody {
+    max-height: none;
+    min-height: 0;
+  }
+  body.view-lock #view-terminal .glass.flex-col {
+    min-height: 0;
+  }
+  body.view-lock footer { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ---------- 表单控件：接入智能体页 ---------- */
+.field-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: #8ea0c9;
+  margin-bottom: 6px;
+}
+.field {
+  width: 100%;
+  background: rgba(8, 12, 28, .78);
+  border: 1px solid rgba(30, 42, 85, .95);
+  border-radius: .65rem;
+  padding: .55rem .8rem;
+  font-size: .8125rem;
+  line-height: 1.5;
+  color: #e8eeff;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.field::placeholder { color: #5f6f99; }
+.field:focus {
+  border-color: rgba(34, 211, 238, .75);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, .12);
+}
+
+.pick-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: .55rem;
+  border: 1px solid rgba(30, 42, 85, .95);
+  background: rgba(10, 14, 39, .6);
+  color: #8ea0c9;
+  font-size: 13px;
+  transition: color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.pick-icon:hover { color: #fff; border-color: rgba(34, 211, 238, .5); }
+.pick-icon.picked {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, .8);
+  background: rgba(34, 211, 238, .12);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, .35) inset;
+}
+
+.pick-color {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.pick-color:hover { transform: scale(1.12); }
+.pick-color.picked { border-color: #fff; box-shadow: 0 0 0 2px rgba(255, 255, 255, .22); }
+
+/* ---------- 平台选择按钮 ---------- */
+.provider-btn {
+  flex: 1;
+  text-align: left;
+  padding: .5rem .7rem;
+  border-radius: .65rem;
+  border: 1px solid rgba(30, 42, 85, .95);
+  background: rgba(10, 14, 39, .6);
+  font-size: 12px;
+  color: #8ea0c9;
+  transition: color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.provider-btn small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #5f6f99;
+}
+.provider-btn:hover { color: #fff; border-color: rgba(34, 211, 238, .4); }
+.provider-btn.picked {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, .8);
+  background: rgba(34, 211, 238, .1);
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, .3);
+}
+.provider-btn.picked small { color: #67e8f9; }
+
+/* ---------- 接入配置：下拉框与密钥输入 ---------- */
+.select-wrap { position: relative; }
+.select-field {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+.select-wrap > i {
+  position: absolute;
+  right: .7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: #5f6f99;
+  pointer-events: none;
+}
+.select-field option { background: #0b1024; color: #e8eeff; }
+
+.key-wrap { position: relative; }
+.key-wrap .field { padding-right: 3.4rem; }
+.key-eye {
+  position: absolute;
+  right: .45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10.5px;
+  color: #8ea0c9;
+  padding: .15rem .45rem;
+  border-radius: .35rem;
+  transition: color .18s ease, background .18s ease;
+}
+.key-eye:hover { color: #22d3ee; background: rgba(34, 211, 238, .1); }
+
+.field-tip {
+  margin-top: .3rem;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #5f6f99;
+}
+
+/* 左栏更窄，图标与色点相应缩小 */
+.pick-icon { width: 30px; height: 30px; font-size: 12px; }
+.pick-color { width: 22px; height: 22px; }
+
+/* ---------- 已接入列表（紧凑行） ---------- */
+.preview-item {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .4rem .5rem;
+  border-radius: .6rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
+}
+.preview-item:hover {
+  background: rgba(34, 211, 238, .06);
+  border-color: rgba(34, 211, 238, .22);
+}
+.preview-item.active {
+  background: color-mix(in srgb, var(--card-color, #22d3ee) 13%, transparent);
+  border-color: color-mix(in srgb, var(--card-color, #22d3ee) 45%, transparent);
+}
+
+/* 折叠区去掉浏览器默认三角 */
+details > summary::-webkit-details-marker { display: none; }
+details > summary::marker { content: ''; }
